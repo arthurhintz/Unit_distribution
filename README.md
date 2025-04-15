@@ -1,1 +1,1 @@
-# Unit_distribution
+# Unit-inverse Gaussian distribution
