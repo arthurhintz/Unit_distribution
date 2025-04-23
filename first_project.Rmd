@@ -1,0 +1,71 @@
+---
+title: "Projeto Renata"
+author: "Andressa, Arthur Hintz, Joaquim , Yasmin Pires"
+date: "`r format(Sys.time(), '%d %b %Y')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+  html_document:
+    theme: journal
+    toc: true
+    toc_float:
+      collapsed: true
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(dpi = 300)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(fig.width=6, fig.height=4)
+```
+
+```{css, echo = FALSE}
+body {
+  text-align: justify;
+}
+```
+
+```{r, include=FALSE}
+# Pacotes
+library(gamlss)
+
+```
+
+```{r}
+# Arthur UIG
+#source("https://raw.githubusercontent.com/arthurhintz/Unit_distribution/refs/heads/main/UIG_functions.R")
+
+source("https://raw.githubusercontent.com/arthurhintz/Unit_distribution/main/uiggamlss.R")
+```
+
+
+```{r}
+# Yasmin CUW
+source("https://raw.githubusercontent.com/Yas190/CUW-Distribution/refs/heads/main/CUW-FOR-GAMLSS.R")
+```
+
+```{r}
+#Andressa
+
+#source("")
+```
+
+```{r}
+# Joca
+```
+
+# Dados
+
+```{r}
+
+```
+
+
+
+
+
