@@ -1,6 +1,6 @@
 #setwd("~/estatistica/semestre 7/modelo taxas proporcoes")
-source("UIG_functions.R")
-library(gamlss)
+#source("UIG_functions.R")
+#library(gamlss)
 
 #log-likelihood of the unit gaussian inverse
 UIG <- expression(
