@@ -1,6 +1,5 @@
-setwd("~/estatistica/semestre 7/modelo tayas proporcoes")
+#setwd("~/estatistica/semestre 7/modelo taxas proporcoes")
 source("UIG_functions.R")
-
 library(gamlss)
 
 #log-likelihood of the unit gaussian inverse
@@ -11,10 +10,10 @@ UIG <- expression(
 )
 
 # teste
-sigma = 2
-mu = 0.5
-y = 0.4
-log(dUIG(y, mu, sigma))
+# sigma = 2
+# mu = 0.5
+# y = 0.4
+# log(dUIG(y, mu, sigma))
 
 #==========/==========/==========/==========/==========/==========/==========/==========/
 
@@ -81,25 +80,3 @@ UIG <- function (mu.link = "logit", sigma.link = "identity"){
   ),
   class = c("gamlss.family", "family"))
 }
-
-#==========/==========/==========/==========/==========/==========/==========/==========/
-
-set.seed(1248)
-n<-1000
-# Case 1: without regressors
-mu_true<-1
-sigma_true<-2
-mu_result <- sigma_result <- c()
-
-for (i in 1:100) {
-  y <- rUIG(n,mu_true, sigma_true)
-  fit <- gamlss(y~1, family="UIG", trace = F)
-  logit_link <- make.link("logit")
-  mu_result[i] <- logit_link$linkinv(fit$mu.coefficients)
-  sigma_result[i] <- fit$sigma.coefficients
-}
-result1<- matrix(c(mu_true, mean(mu_result),
-                   sigma_true, mean(sigma_result)),2,2)
-colnames(result1)<-c("mu","sigma")
-rownames(result1)<-c("true value","mean")
-print(round(result1,4))
