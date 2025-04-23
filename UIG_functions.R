@@ -115,42 +115,42 @@ estim <- function(x) {
 #==========/==========/==========/==========/==========/==========/==========/==========/
 # Simulação
 
-set.seed(1248)
-nrep <- 500
-n <- 100
-mu_true <- 0.8
-lambda_true <- 2.5
-
-mu_hat <- numeric(nrep)
-lambda_hat <- numeric(nrep)
-
-for(i in 1:nrep){
-  amostra <- rUIG(n, mu_true, lambda_true)
-
-    est <- estim(amostra)
-
-    mu_hat[i] <- est[1]
-    lambda_hat[i] <- est[2]
-}
-
-media_mu <- mean(mu_hat)
-media_lambda <- mean(lambda_hat)
-
-# viés
-bies_mu <- media_mu - mu_true
-bies_lambda <- media_lambda - lambda_true
-
-# EQM
-eqm_mu <- mean((mu_hat - mu_true)^2)
-eqm_lambda <- mean((lambda_hat - lambda_true)^2)
-
-# Resultados
-resultados <- data.frame(
-  Parametro = c("mu", "lambda"),
-  Verdadeiro = c(mu_true, lambda_true),
-  Estimado = round(c(media_mu, media_lambda),4),
-  Vies = round(c(bies_mu, bies_lambda), 4),
-  EQM = round(c(eqm_mu, eqm_lambda), 4)
-)
-
-resultados
+# set.seed(1248)
+# nrep <- 500
+# n <- 100
+# mu_true <- 0.8
+# lambda_true <- 2.5
+# 
+# mu_hat <- numeric(nrep)
+# lambda_hat <- numeric(nrep)
+# 
+# for(i in 1:nrep){
+#   amostra <- rUIG(n, mu_true, lambda_true)
+# 
+#     est <- estim(amostra)
+# 
+#     mu_hat[i] <- est[1]
+#     lambda_hat[i] <- est[2]
+# }
+# 
+# media_mu <- mean(mu_hat)
+# media_lambda <- mean(lambda_hat)
+# 
+# # viés
+# bies_mu <- media_mu - mu_true
+# bies_lambda <- media_lambda - lambda_true
+# 
+# # EQM
+# eqm_mu <- mean((mu_hat - mu_true)^2)
+# eqm_lambda <- mean((lambda_hat - lambda_true)^2)
+# 
+# # Resultados
+# resultados <- data.frame(
+#   Parametro = c("mu", "lambda"),
+#   Verdadeiro = c(mu_true, lambda_true),
+#   Estimado = round(c(media_mu, media_lambda),4),
+#   Vies = round(c(bies_mu, bies_lambda), 4),
+#   EQM = round(c(eqm_mu, eqm_lambda), 4)
+# )
+# 
+# resultados
