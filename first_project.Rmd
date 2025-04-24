@@ -3,9 +3,6 @@ title: "Projeto Renata"
 author: "Andressa, Arthur Hintz, Joaquim , Yasmin Pires"
 date: "`r format(Sys.time(), '%d %b %Y')`"
 output:
-  pdf_document:
-    latex_engine: xelatex
-    toc: true
   html_document:
     theme: journal
     toc: true
@@ -33,12 +30,14 @@ body {
 ```{r, include=FALSE}
 # Pacotes
 library(gamlss)
+library(tidyverse)
+library(forecast)
 
 ```
 
 ```{r}
 # Arthur UIG
-#source("https://raw.githubusercontent.com/arthurhintz/Unit_distribution/refs/heads/main/UIG_functions.R")
+source("https://raw.githubusercontent.com/arthurhintz/Unit_distribution/refs/heads/main/UIG_functions.R")
 
 source("https://raw.githubusercontent.com/arthurhintz/Unit_distribution/main/uiggamlss.R")
 ```
@@ -46,7 +45,10 @@ source("https://raw.githubusercontent.com/arthurhintz/Unit_distribution/main/uig
 
 ```{r}
 # Yasmin CUW
+source("https://raw.githubusercontent.com/Yas190/CUW-Distribution/refs/heads/main/CUW_functions.R")
+
 source("https://raw.githubusercontent.com/Yas190/CUW-Distribution/refs/heads/main/CUW-FOR-GAMLSS.R")
+
 ```
 
 ```{r}
@@ -57,15 +59,184 @@ source("https://raw.githubusercontent.com/Yas190/CUW-Distribution/refs/heads/mai
 
 ```{r}
 # Joca
+source("https://raw.githubusercontent.com/JoaquimReis/Log-Bilal_arma/refs/heads/main/LB_gamlss.R")
+
 ```
 
 # Dados
 
 ```{r}
+data("cable") 
+dados <- cable  
+
+head(dados)
+```
+
+
+Ajustando os Modelos
+
+
+```{r}
+
+fitting <- function(dados, Y, famili){
+  
+  fit_full <- gamlss(Y ~.,
+                      sigma.formula = ~ ., family= famili(),
+                      data = dados, trace = F)
+  
+  best <- stepGAIC(fit_full)
+
+  fit_end <- eval(best$call)
+  
+  return(fit_end)
+}
+
 
 ```
 
 
+Modelos tradicionais
+
+## Regressão Beta
+
+```{r, include=FALSE}
+completo_beta<-gamlss(pen5 ~.,
+                      sigma.formula = ~., family=BE(),
+                      data= dados, trace=F)
+final_beta <-stepGAIC(completo_beta)
+
+final_beta <- gamlss(formula = pen5 ~ lin + ltv + agehe, 
+                     sigma.formula = ~ lin, 
+                     family = BE(), data = cable, trace = FALSE)
+#summary(final_beta)
+```
+
+```{r}
+
+plot(final_beta)
+wp(final_beta)
+shapiro.test(final_beta$residuals)
+```
 
 
+## Regressão Simplex
+
+```{r, include=FALSE}
+completo_simplex<-gamlss(pen5 ~.,
+                         sigma.formula = ~.,family=SIMPLEX(),
+                         data=cable,trace=F)
+final_simplex <- stepGAIC(completo_simplex)
+
+final_simplex <- gamlss(formula = pen5 ~ lin + ltv + agehe, 
+                        sigma.formula = ~ child + ltv, 
+                       family = SIMPLEX(), 
+                       data = cable, trace = FALSE)
+
+#summary(final_simplex)
+
+```
+```{r}
+
+wp(resid=na.omit(final_simplex$residuals))
+shapiro.test(final_simplex$residuals)
+
+hist(final_simplex$residuals,freq = F)
+curve(dnorm,add=T)  
+```
+
+
+## Regressão UIG
+
+```{r, include=FALSE}
+
+completo_UIG <- gamlss(pen5~.,
+                    sigma.formula =~.,
+                    family=UIG(sigma.link = "log"),
+                    data = dados, trace=F)
+
+final_UIG<-stepGAIC(completo_UIG)
+final_UIG <- gamlss(formula = pen5 ~ lin + ltv + agehe, 
+                    sigma.formula = ~ child + ltv + agehe, 
+                    family = UIG(sigma.link = "log"),
+                    data = dados, trace = FALSE)
+
+#summary(final_UIG)
+```
+
+```{r}
+plot(final_UIG)
+wp(final_UIG,ylim.all = T)
+shapiro.test(final_UIG$residuals)
+
+hist(final_UIG$residuals,freq = F)
+curve(dnorm,add=T)    
+```
+
+
+## Regressão CUW
+
+```{r, include=FALSE}
+completo_CUW <- gamlss(pen5 ~.,
+                    sigma.formula = ~.,
+                    family = CUW(sigma.link = "log"),
+                    data = dados,trace=F)
+
+
+final_CUW<-stepGAIC(completo_CUW)
+final_CUW$call
+
+final_CUW <- gamlss(formula = pen5 ~ 1, 
+                    family = CUW(sigma.link = "log"), 
+                    data = cable, trace = FALSE)
+summary(final_CUW)
+```
+
+
+
+## Regressão Bilau
+
+```{r, include=FALSE}
+completo_LB <- gamlss(pen5~.,
+                    family=LB(),
+                    data=dados, trace=F)
+
+final_LB <- stepGAIC(completo_LB)
+final_LB <- gamlss(formula = pen5 ~ lin + ltv + agehe, 
+                    family = LB(), data = dados, trace = FALSE)
+
+summary(final_LB)
+```
+
+```{r}
+plot(final_LB)
+wp(final_LB,ylim.all = T)
+shapiro.test(final_LB$residuals)
+```
+
+
+
+# Resultados
+
+```{r}
+IC <-data.frame(
+  AIC= c(final_beta$aic,final_simplex$aic,final_UIG$aic,
+        final_CUW$aic, final_LB$aic),
+  BIC= c(final_beta$sbc,final_simplex$sbc,final_UIG$sbc,
+        final_CUW$sbc, final_LB$sbc)
+  #Rsq= c(Rsq(final_beta),Rsq(final_simplex),Rsq(final_beta),
+   #     Rsq(final_CUW), Rsq(final_LB))
+)
+results<-cbind(IC,
+               rbind(
+                 accuracy(final_beta$mu.fv,dados$pen5),
+                 accuracy(final_simplex$mu.fv,dados$pen5),
+                 accuracy(final_UIG$mu.fv,dados$pen5),
+                 accuracy(final_CUW$mu.fv,dados$pen5),
+                 accuracy(final_LB$mu.fv,dados$pen5)
+               )
+)
+rownames(results)<-c("Beta","Simplex","UIG", "CUW", "LB")
+results
+
+```
 
