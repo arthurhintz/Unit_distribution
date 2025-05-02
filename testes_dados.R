@@ -45,7 +45,6 @@ for(k in seq_along(anos)){
   
   try({
     fit1 <- gamlss(Resposta ~ ., 
-                   sigma.formula = ~., 
                    family = BE(), 
                    method = RS(),
                    data = banco, trace = FALSE)
@@ -55,8 +54,7 @@ for(k in seq_along(anos)){
   
   try({
     fit2 <- gamlss(Resposta ~ .,
-                   sigma.formula = ~.,
-                   family = UIG(),
+                   family = UIG(mu.link = "log"),
                    method = RS(),
                    data = banco, trace = FALSE)
     
@@ -65,7 +63,6 @@ for(k in seq_along(anos)){
   
   try({
     fit3 <- gamlss(Resposta ~ ., 
-                   sigma.formula = ~., 
                    family = CUW(), 
                    method = RS(),
                    data = banco, trace = FALSE)
@@ -93,63 +90,11 @@ melhores_modelos <- results %>%
 
 write.table(results, file = "aic.txt")
 
-completo_beta<-gamlss(TX_EVASAO ~ .,
-                      sigma.formula = TX_EVASAO ~ . , 
-                      family=BE(),
-                      data = banco, trace=T)
-
-completo_beta$aic
-
-
-completo_UIG <- gamlss(TX_EVASAO ~ .,
-                       sigma.formula = ~. ,
-                       family = UIG(mu.link = "log", sigma.link = "log"),
-                       method = CG(),
-                       control = gamlss.control(c.crit = 0.001, n.cyc = 200,
-                                              mu.step = .5, sigma.step = .5,
-                                              trace= T),
-                       data=banco)
-
-summary(completo_UIG)
-
-y <- dados$TX_EVASAO
-a <- dUIG(y)
-summary(a)
-
-
-completo_CUW <- gamlss(TX_EVASAO ~.,
-                       sigma.formula = ~.,
-                       family = CUW(sigma.link = "log"),
-                       data = banco,trace=F)
-completo_CUW$aic
-
-
-completo_LB <- gamlss(TX_EVASAO~.,
-                      family=LB(mu.link = "logit"),
-                      data=banco, trace=F)
-
-
-completo_LB
-
-completo_simplex<-gamlss(TX_EVASAO~.,
-                         sigma.formula = ~.,family=SIMPLEX(),
-                         data=banco,trace=F)
-
-
-
-
 #==========/==========/==========/==========/==========/==========/==========/==========/
-
-setwd("~/estatistica/semestre 7/modelo taxas proporcoes")
-dados_base <- read.csv("tobacco_data.csv")
-
-
-
-table(dados_base$YEAR)
 
 
 dados <- dados_base |> 
-  filter(YEAR == "2000") |> 
+  filter(YEAR == "2008") |> 
   filter(Resposta > 0 & Resposta < 100) |> 
   mutate(Resposta = Resposta/100) |> 
   mutate(Latitude = Latitude/100) |>
@@ -166,7 +111,8 @@ completo_beta<-gamlss(Resposta ~ .,
                       family=BE(),
                       data = dados, trace=T)
 
-completo_beta$aic
+
+plot(completo_beta)
 
 summary(completo_beta)
 
@@ -210,7 +156,6 @@ completo_simplex$aic
 #==========/==========/==========/==========/==========/==========/==========/==========/
 
 completo_UIG <- gamlss(Resposta ~ .,
-                       sigma.formula = ~.,
                        family = UIG(),
                        method = RS(),
                        control = gamlss.control(c.crit = 0.001, n.cyc = 200,
@@ -225,12 +170,12 @@ summary(final_UIG)
 
 final_UIG$call
 
-final <- gamlss(formula = Resposta ~ Longitude + TopicDesc_Cigarette.Use..Youth. + 
-         TopicDesc_Smokeless.Tobacco.Use..Youth. + MeasureDesc_Percent.of.Current.Smokers.Who.Want.to.Quit + 
-         Education_High.School, 
-         sigma.formula = ~ TopicDesc_Cigarette.Use..Youth. + Gender_Male + Education_High.School, family = UIG(), 
-       data = dados, method = RS(),
-       trace = FALSE)
+final <- gamlss(formula = Resposta ~ Latitude + Longitude + TopicDesc_Cigarette.Use..Youth. + 
+         TopicDesc_Smokeless.Tobacco.Use..Youth. + 
+         Education_High.School, family = UIG(), data = dados, 
+       method = RS(), control = gamlss.control(c.crit = 0.001, n.cyc = 200, 
+                                               mu.step = 0.1, sigma.step = 0.1, trace = T), trace = FALSE)
+
 
 summary(final)
 
