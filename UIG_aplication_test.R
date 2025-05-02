@@ -29,7 +29,7 @@ final_simplex <- gamlss(formula = pen5 ~ lin + ltv + agehe,
 
 summary(final_simplex)
 
-# fitting the UG regression
+# fitting the UIG regression
 
 source("uiggamlss.R")
 

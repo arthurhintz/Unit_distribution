@@ -66,10 +66,12 @@ source("https://raw.githubusercontent.com/JoaquimReis/Log-Bilal_arma/refs/heads/
 # Dados
 
 ```{r}
-data("cable") 
-dados <- cable  
+dados <- read.csv("EVASAO_1ANO_CURSOS2018.csv")
 
-head(dados)
+dados <- dados |> 
+  dplyr::filter(NO_CURSO == "MEDICINA") |> 
+  dplyr::select(2:13, 16, 18,20:29)
+
 ```
 
 

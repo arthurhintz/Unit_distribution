@@ -5,14 +5,14 @@
 #log-likelihood of the unit gaussian inverse
 UIG <- expression(
  
-  log(sigma/(2*pi)) * (1 / 2) - log(y *(-log(y))^(3/2)) + 
-    (sigma * (log(y) + mu) ^ 2) / (2 * mu ^ 2 * log(y))
+  (1/2) * (log(sigma) - log(2*pi)) - (log(y *(-log(y))^(3/2))) + 
+    ((sigma * (log(y) + mu) ^ 2) / (2 * mu ^ 2 * log(y)))
 )
 
 # teste
-# sigma = 2
-# mu = 0.5
-# y = 0.4
+# sigma = 3
+# mu = 1
+# y = 0.9
 # log(dUIG(y, mu, sigma))
 
 #==========/==========/==========/==========/==========/==========/==========/==========/
@@ -22,10 +22,11 @@ d1l <- D(UIG,"sigma")
 d2ml <- D(d1m,"sigma")
 
 
-UIG <- function (mu.link = "logit", sigma.link = "identity"){
+
+UIG <- function (mu.link = "log", sigma.link = "log"){
   
   mstats <- checklink("mu.link", "UIG", substitute(mu.link),
-                      c("logit", "probit", "cloglog", "cauchit", "log", "own"))
+                      c("logit", "inverse","probit", "cloglog", "cauchit", "log", "own"))
   dstats <- checklink("sigma.link", "UIG", substitute(sigma.link),
                       c("inverse", "log", "identity", "own"))
   structure(list(family = c("UIG", "Unit-Inverse-Gaussiana"),
@@ -73,8 +74,8 @@ UIG <- function (mu.link = "logit", sigma.link = "identity"){
                    rqres(pfun = "pUIG", type = "Continuous", y = y, mu = mu, lambda = sigma)
                  ),
                  mu.initial = expression(mu <- rep(mean(y),length(y))),
-                 sigma.initial = expression(sigma<- rep(4, length(y))),
-                 mu.valid = function(mu) all(mu > 0 & mu < 1),
+                 sigma.initial = expression(sigma<- rep(0.5, length(y))),
+                 mu.valid = function(mu) all(mu > 0),
                  sigma.valid = function(sigma) all(sigma > 0),
                  y.valid = function(y) all(y > 0 & y < 1)
   ),
