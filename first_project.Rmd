@@ -32,6 +32,8 @@ body {
 library(gamlss)
 library(tidyverse)
 library(forecast)
+library(stringr)
+library(fastDummies)
 
 ```
 
@@ -45,16 +47,16 @@ source("https://raw.githubusercontent.com/arthurhintz/Unit_distribution/main/uig
 
 ```{r}
 # Yasmin CUW
-source("https://raw.githubusercontent.com/Yas190/CUW-Distribution/refs/heads/main/CUW_functions.R")
-
-source("https://raw.githubusercontent.com/Yas190/CUW-Distribution/refs/heads/main/CUW-FOR-GAMLSS.R")
+# source("https://raw.githubusercontent.com/Yas190/CUW-Distribution/refs/heads/main/CUW_functions.R")
+# 
+# source("https://raw.githubusercontent.com/Yas190/CUW-Distribution/refs/heads/main/CUW-FOR-GAMLSS.R")
 
 ```
 
 ```{r}
 #Andressa
 
-#source("")
+# source("https://raw.githubusercontent.com/andressalss/UNH_distribution/refs/heads/main/UNH_gamlss.R")
 ```
 
 ```{r}
@@ -66,179 +68,168 @@ source("https://raw.githubusercontent.com/JoaquimReis/Log-Bilal_arma/refs/heads/
 # Dados
 
 ```{r}
-dados <- read.csv("EVASAO_1ANO_CURSOS2018.csv")
 
-dados <- dados |> 
-  dplyr::filter(NO_CURSO == "MEDICINA") |> 
-  dplyr::select(2:13, 16, 18,20:29)
+url <- "https://raw.githubusercontent.com/arthurhintz/Unit_distribution/refs/heads/main/Tobacco_Survey_Data.csv"
+
+tobacco_data_raw <- read_csv(url)
+
+tobacco_data <- na.omit(tobacco_data_raw)
+
+# Seleção das variáveis
+tobacco_data <- tobacco_data %>% 
+  select(
+    -LocationAbbr,
+    -Data_Value_Std_Err,
+    -Low_Confidence_Limit,
+    -High_Confidence_Limit,
+    -Sample_Size,
+    -StratificationID1,
+    -StratificationID4,
+    -DisplayOrder,
+    -SubMeasureID,
+    -MeasureDesc
+  )
+# Transformação das cordenadas
+tobacco_data <- tobacco_data %>%
+  mutate(GeoLocation = str_remove_all(GeoLocation, "[()]")) %>%
+  separate_wider_delim(
+    cols = "GeoLocation",
+    delim = ",",
+    names = c("Latitude", "Longitude")
+  ) %>%
+  mutate(
+    Latitude = as.numeric(Latitude),
+    Longitude = as.numeric(Longitude)
+  )
+
+# Transformação das variáveis dummies
+tobacco_data <- dummy_cols(tobacco_data, select_columns = c("TopicDesc","Response","Gender","Education"),
+                           remove_selected_columns = TRUE, remove_first_dummy = T)
+
+head(tobacco_data)
 
 ```
 
-
-Ajustando os Modelos
-
+# Análise Exploratória
 
 ```{r}
+modelo_lm <- lm(Resposta ~ ., data = tobacco_data)
+car::vif(modelo_lm)
 
-fitting <- function(dados, Y, famili){
-  
-  fit_full <- gamlss(Y ~.,
-                      sigma.formula = ~ ., family= famili(),
-                      data = dados, trace = F)
-  
-  best <- stepGAIC(fit_full)
-
-  fit_end <- eval(best$call)
-  
-  return(fit_end)
-}
-
-
+corrplot::corrplot(cor(tobacco_data))
 ```
 
 
-Modelos tradicionais
+
+# Ajustando os Modelos
+
+```{r}
+# fitting <- function(dados, Y, famili){
+#   fit_full <- gamlss(Y ~.,
+#                       sigma.formula = ~ ., family= famili(),
+#                       data = dados, trace = F)
+#   
+#   best <- stepGAIC(fit_full)
+#   fit_end <- eval(best$call)
+#   return(fit_end)
+# }
+```
+
+```{r}
+banco <- tobacco_data |> 
+  filter(YEAR == 2000) |> 
+  select(-YEAR) |> 
+  filter(Resposta > 0 & Resposta < 100) |> 
+  mutate(Resposta = Resposta/100) |> 
+  mutate(Latitude = Latitude/100) |>
+  mutate(Longitude = Longitude/100) |> 
+  mutate(across(.cols = 4:9, as.factor))
+```
+
 
 ## Regressão Beta
 
-```{r, include=FALSE}
-completo_beta<-gamlss(pen5 ~.,
-                      sigma.formula = ~., family=BE(),
-                      data= dados, trace=F)
-final_beta <-stepGAIC(completo_beta)
-
-final_beta <- gamlss(formula = pen5 ~ lin + ltv + agehe, 
-                     sigma.formula = ~ lin, 
-                     family = BE(), data = cable, trace = FALSE)
-#summary(final_beta)
-```
-
 ```{r}
 
-plot(final_beta)
-wp(final_beta)
-shapiro.test(final_beta$residuals)
-```
+be <- gamlss(Resposta ~ ., 
+             sigma.formula = ~., 
+             family = BE(), 
+             method = RS(),
+             data = banco, trace = FALSE)
 
+be$aic
+plot(be)
+```
 
 ## Regressão Simplex
 
-```{r, include=FALSE}
-completo_simplex<-gamlss(pen5 ~.,
-                         sigma.formula = ~.,family=SIMPLEX(),
-                         data=cable,trace=F)
-final_simplex <- stepGAIC(completo_simplex)
-
-final_simplex <- gamlss(formula = pen5 ~ lin + ltv + agehe, 
-                        sigma.formula = ~ child + ltv, 
-                       family = SIMPLEX(), 
-                       data = cable, trace = FALSE)
-
-#summary(final_simplex)
-
-```
 ```{r}
+simplex <- gamlss(Resposta ~ ., 
+                  family = SIMPLEX(), 
+                  data = banco, trace = FALSE)
 
-wp(resid=na.omit(final_simplex$residuals))
-shapiro.test(final_simplex$residuals)
 
-hist(final_simplex$residuals,freq = F)
-curve(dnorm,add=T)  
+simplex$aic  
+plot(simplex)
+```
+
+
+## Regressão log-BIlal
+```{r}
+lb <- gamlss(Resposta ~ ., 
+             family = LB(), 
+             data = banco, trace = FALSE)
+
+lb$aic  
+plot(lb)
+
+
 ```
 
 
 ## Regressão UIG
 
-```{r, include=FALSE}
+```{r}
+# uig <- gamlss(Resposta ~ .,
+#               sigma.formula = ~.,
+#               family = UIG(),
+#               method = RS(),
+#               data = banco, trace = FALSE)
+# 
+# uig$aic
+# plot(uig)
+```
 
-completo_UIG <- gamlss(pen5~.,
-                    sigma.formula =~.,
-                    family=UIG(sigma.link = "log"),
-                    data = dados, trace=F)
 
-final_UIG<-stepGAIC(completo_UIG)
-final_UIG <- gamlss(formula = pen5 ~ lin + ltv + agehe, 
-                    sigma.formula = ~ child + ltv + agehe, 
-                    family = UIG(sigma.link = "log"),
-                    data = dados, trace = FALSE)
+# Resultados Geral
 
-#summary(final_UIG)
+
+# Melhor Modelo Beta
+
+```{r}
+final_beta <- stepGAIC(be)
+
+final_beta$call
+
+final <- gamlss(formula = Resposta ~ `TopicDesc_Smokeless Tobacco Use (Youth)` +
+                  Response_Ever + Response_Frequent + Gender_Male + 
+                  Gender_Overall + `Education_Middle School`, 
+                sigma.formula = ~ Latitude + Longitude + Response_Ever + 
+                  Response_Frequent + Gender_Overall + `Education_Middle School`,
+                family = BE(), 
+    data = banco, method = RS(), trace = FALSE)
+
+summary(final)
 ```
 
 ```{r}
-plot(final_UIG)
-wp(final_UIG,ylim.all = T)
-shapiro.test(final_UIG$residuals)
+plot(final)
+wp(final,ylim.all = T)
+shapiro.test(final$residuals)
 
-hist(final_UIG$residuals,freq = F)
-curve(dnorm,add=T)    
+hist(final$residuals,freq = F)
+curve(dnorm,add=T)
 ```
 
 
-## Regressão CUW
-
-```{r, include=FALSE}
-completo_CUW <- gamlss(pen5 ~.,
-                    sigma.formula = ~.,
-                    family = CUW(sigma.link = "log"),
-                    data = dados,trace=F)
-
-
-final_CUW<-stepGAIC(completo_CUW)
-final_CUW$call
-
-final_CUW <- gamlss(formula = pen5 ~ 1, 
-                    family = CUW(sigma.link = "log"), 
-                    data = cable, trace = FALSE)
-summary(final_CUW)
-```
-
-
-
-## Regressão Bilau
-
-```{r, include=FALSE}
-completo_LB <- gamlss(pen5~.,
-                    family=LB(),
-                    data=dados, trace=F)
-
-final_LB <- stepGAIC(completo_LB)
-final_LB <- gamlss(formula = pen5 ~ lin + ltv + agehe, 
-                    family = LB(), data = dados, trace = FALSE)
-
-summary(final_LB)
-```
-
-```{r}
-plot(final_LB)
-wp(final_LB,ylim.all = T)
-shapiro.test(final_LB$residuals)
-```
-
-
-
-# Resultados
-
-```{r}
-IC <-data.frame(
-  AIC= c(final_beta$aic,final_simplex$aic,final_UIG$aic,
-        final_CUW$aic, final_LB$aic),
-  BIC= c(final_beta$sbc,final_simplex$sbc,final_UIG$sbc,
-        final_CUW$sbc, final_LB$sbc)
-  #Rsq= c(Rsq(final_beta),Rsq(final_simplex),Rsq(final_beta),
-   #     Rsq(final_CUW), Rsq(final_LB))
-)
-results<-cbind(IC,
-               rbind(
-                 accuracy(final_beta$mu.fv,dados$pen5),
-                 accuracy(final_simplex$mu.fv,dados$pen5),
-                 accuracy(final_UIG$mu.fv,dados$pen5),
-                 accuracy(final_CUW$mu.fv,dados$pen5),
-                 accuracy(final_LB$mu.fv,dados$pen5)
-               )
-)
-rownames(results)<-c("Beta","Simplex","UIG", "CUW", "LB")
-results
-
-```
 
