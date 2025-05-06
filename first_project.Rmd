@@ -61,9 +61,17 @@ source("https://raw.githubusercontent.com/arthurhintz/Unit_distribution/main/uig
 
 ```{r}
 # Joca
-source("https://raw.githubusercontent.com/JoaquimReis/Log-Bilal_arma/refs/heads/main/LB_gamlss.R")
+source("https://raw.githubusercontent.com/JoaquimReis/LB-gamlss/refs/heads/main/LB_gamlss.R")
 
 ```
+
+```{r}
+# Renata Kumaraswamy
+
+source("https://raw.githubusercontent.com/renata-rojasg/UnitDistForGAMLSS/refs/heads/main/KW_reg.R")
+
+```
+
 
 # Dados
 
@@ -199,6 +207,20 @@ plot(lb)
 # uig$aic
 # plot(uig)
 ```
+
+# Regressão kumaraswamy 
+
+```{r}
+kw <- gamlss(Resposta ~ ., sigma.formula = ~ .,
+             family = Kuma(sigma.link = "log"), data = banco, trace = FALSE)
+
+
+kw$aic  
+plot(kw)
+
+
+```
+
 
 
 # Resultados Geral
