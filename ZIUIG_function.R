@@ -110,7 +110,7 @@ qIUIG<-function (p, mu = 0.7, sigma = 2.1, nu = 0.1, lower.tail = TRUE,
   
   u <- (p - nu)/(1 - nu)
   
-  if(nu >= p) 0
+  if(nu >= p) {q <- 0}
     else {     
     
       # Acho que preciso usar o pUIG normal
@@ -136,6 +136,7 @@ qUIG((u - nu)/(1 - nu),mu = mu, lambda = sigma)
 
 #------------------------------------------------------------------------------------------
 # inversion method for random generation
+
 
 rIUIG<-function (n, mu = 0.7, sigma = 2.1, nu = 0.1){
   
@@ -177,4 +178,6 @@ mu
 sigma
 nu
 
-rIUIG(10, mu, sigma,nu)
+sampling <- rIUIG(100, mu, sigma,nu)
+hist(sampling, breaks = 10, xlim = c(0,1))
+max(sampling)
