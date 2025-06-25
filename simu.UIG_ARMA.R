@@ -1,4 +1,3 @@
-setwd("~/estatistica/semestre 7/modelo taxas proporcoes")
 source("UIG_functions.R")
 
 
@@ -35,7 +34,9 @@ simu.UIG_ARMA <- function(n, sigma, alpha, phi=NULL, theta=NULL, freq=12, link="
     return( ts(y[(m+1):(n+m)],frequency=freq) )
 }
 
-yhat <- simu.UIG_ARMA(100, 2, 0.4, -0.5, alpha = 0.5)
 
+# yhat <- simu.UIG_ARMA(1000, 2, alpha = 0.3, phi = 0.2, theta = 0.1)
+# summary(yhat)
+# hist(yhat)
+# plot(yhat)
 
-sd(yhat)

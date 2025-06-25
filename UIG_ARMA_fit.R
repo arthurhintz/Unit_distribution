@@ -1,10 +1,4 @@
-
-sigma = 1
-ar = 1
-ma = 1
-y <- simu.UIG_ARMA(100,sigma = 1,alpha=.3,phi=.2,theta=-.1)
-link = "logit"
-
+# Modelo ARMA(1,1) da Distribuição Gauissiana Unitária
 
 UIG_ARMA.fit <- function(y, link = "logit") {
   if (min(y) <= 0 || max(y) >= 1)
@@ -25,7 +19,7 @@ UIG_ARMA.fit <- function(y, link = "logit") {
   
   # Ajuste inicial via Mínimos Quadrados
   Ynew <- ynew[(m + 1):n]
-  x <- matrix(ynew[m:(n - 1)], n - m, 1) # defasagem 1
+  x <- matrix(ynew[m:(n - 1)], n - m, 1) 
   x <- cbind(rep(1,(n-m)), x)
   ajuste <- lm.fit(x, Ynew)
   a_phi <- ajuste$coefficients
@@ -90,13 +84,13 @@ UIG_ARMA.fit <- function(y, link = "logit") {
   return(z)
 }
 
-R<-100
-coeff<-matrix(NA,R,4)
-for(i in 1:R){
-  y<-simu.UIG_ARMA(1000, sigma = 2, alpha = .3, phi = .3, theta = -0.3)
-  fit <- UIG_ARMA.fit(y)
-  coeff[i,]<-fit$model[,1]
-}
-
-apply(coeff,2,mean)
+# R <- 1000
+# coeff<-matrix(NA,R,4)
+# for(i in 1:R){
+#   y <- simu.UIG_ARMA(500, sigma = 2.5, alpha = .2, phi = .3, theta = 0.2)
+#   fit <- UIG_ARMA.fit(y)
+#   coeff[i,]<-fit$model[,1]
+# }
+# 
+# apply(coeff,2,mean)
 
