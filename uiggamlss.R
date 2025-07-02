@@ -23,7 +23,7 @@ d2ml <- D(d1m,"sigma")
 
 
 
-UIG <- function (mu.link = "logit", sigma.link = "identity"){
+UIG <- function (mu.link = "log", sigma.link = "log"){
   
   mstats <- checklink("mu.link", "UIG", substitute(mu.link),
                       c("logit", "inverse","probit", "cloglog", "cauchit", "log", "own"))
