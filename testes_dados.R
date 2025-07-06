@@ -3,23 +3,7 @@ library(car)
 library(dplyr)
 
 
-setwd("~/estatistica/semestre 7/modelo taxas proporcoes")
 dados_base <- read.csv("tobacco_data.csv")
-
-
-table(dados_base$YEAR)
-
-
-anos <- unique(dados_base$YEAR)
-
-str(dados_base)
-
-summary(dados_base)
-
-hist(dados_base$Resposta)
-
-modelo_lm <- lm(Resposta ~ ., data = dados_base)
-car::vif(modelo_lm)
 
 
 # Data frame para armazenar os resultados
@@ -92,14 +76,30 @@ write.table(results, file = "aic.txt")
 
 #==========/==========/==========/==========/==========/==========/==========/==========/
 
+dados_base$classes_anos <- cut(
+  dados_base$Ano,
+  breaks = c(1998, 2002, 2007, 2012, 2018),
+  labels = c("99-02", "03-07", "08-12", "13-17"),
+  right = TRUE
+)
 
-dados <- dados_base |> 
-  filter(YEAR == "2008") |> 
+table(classes_anos)
+
+dados_base_dummies <- dummy_cols(
+  dados_base,
+  select_columns = "classes_anos",
+  remove_selected_columns = TRUE,  # remove a variável categórica original
+  remove_first_dummy = TRUE        # evita multicolinearidade (opcional)
+)
+
+
+dados <- dados_base_dummies |> 
   filter(Resposta > 0 & Resposta < 100) |> 
   mutate(Resposta = Resposta/100) |> 
   mutate(Latitude = Latitude/100) |>
   mutate(Longitude = Longitude/100) |> 
-  select(3:5, 7:11,13,14, 16) |> 
+  mutate(Tamanho_Amostra = log(Tamanho_Amostra)) |> 
+  select(2:13) |> 
   na.omit()
 
 
@@ -109,16 +109,19 @@ summary(dados)
 completo_beta<-gamlss(Resposta ~ .,
                       sigma.formula = ~.,
                       family=BE(),
-                      data = dados, trace=T)
+                      control = gamlss.control(c.crit = 0.001, n.cyc = 200,
+                                               mu.step = .1, sigma.step = .1,
+                                               trace= T),
+                      data = dados)
 
-
+completo_beta$aic
 plot(completo_beta)
 
 summary(completo_beta)
 
 completo_UIG <- gamlss(Resposta ~ .,
                        sigma.formula = ~.,
-                       family = UIG(),
+                       family = UIG(mu.link = "log", sigma.link = "log"),
                        method = RS(),
                        control = gamlss.control(c.crit = 0.001, n.cyc = 200,
                                                 mu.step = .1, sigma.step = .1,
@@ -126,9 +129,13 @@ completo_UIG <- gamlss(Resposta ~ .,
                        data=dados)
 
 summary(completo_UIG)
-
+plot(completo_UIG)
 completo_UIG$aic
 
+completo_UIG$residuals 
+completo_UIG$y
+
+plot(completo_UIG$y)
 
 completo_CUW <- gamlss(Resposta ~.,
                        sigma.formula = ~.,
